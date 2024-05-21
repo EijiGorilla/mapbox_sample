@@ -21,7 +21,7 @@ import land_local from './data.json';
 import { DeckGL } from 'deck.gl';
 import {
   lotPolyStyle,
-  dataLayerLine,
+  cBoundaryPolyStyle,
   lotPtStyle,
   lotPtLabel,
   stationLabel,
@@ -46,6 +46,7 @@ function App() {
   const [stationSelected, setStationSelected] = useState<null | any>(null);
   const [allData, setAllData] = useState<FeatureCollection>();
   const [pointData, setPointData] = useState<FeatureCollection>();
+  const [cboundaryData, setCboundaryData] = useState<FeatureCollection>();
   const [clickedInfo, setClickedInfo] = useState<any>(null);
   const [clickedBool, setClickedBool] = useState<boolean>(false);
   const [filteredGeojson, setFilteredGeojson] = useState<FeatureCollection>(emptyFeatureCollection);
@@ -109,11 +110,20 @@ function App() {
         setPointData(json);
       })
       .catch((err) => console.error('Could not load data', err));
+
+    fetch(
+      'https://raw.githubusercontent.com/EijiGorilla/EijiGorilla.github.io/master/WebApp/ArcGIS_API_for_JavaScript/Sample/MMSP_Construction_Boundary.geojson',
+    )
+      .then((resp) => resp.json())
+      .then((json) => {
+        setCboundaryData(json);
+      })
+      .catch((err) => console.error('Could not load data', err));
   }, []);
 
   const data = useMemo(() => {
-    return [allData, pointData, labelGeojson];
-  }, [allData, pointData, labelGeojson]);
+    return [allData, pointData, labelGeojson, cboundaryData];
+  }, [allData, pointData, labelGeojson, cboundaryData]);
 
   // Dropdown filter
   const handleMunicipalityChange = (obj: any) => {
@@ -244,7 +254,14 @@ function App() {
           zoom: 14,
         }}
         onClick={clickedOn}
-        interactiveLayerIds={['lotPoly', 'stationPt', 'stationPtLabel', 'lotPt', 'lotPtLabels']}
+        interactiveLayerIds={[
+          'lotPoly',
+          'stationPt',
+          'stationPtLabel',
+          'lotPt',
+          'lotPtLabels',
+          'lotPolyBoundary',
+        ]}
         mapStyle={'mapbox://styles/mapbox/streets-v9'}
       >
         {/* why use useMemo? */}
@@ -255,6 +272,9 @@ function App() {
             filter={stationSelected && stationSelected.field1 === 'All' ? filter_all : filter}
             id="lotPoly"
           />
+        </Source>
+        <Source type="geojson" data={data[3]}>
+          <Layer {...cBoundaryPolyStyle} id="lotPolyBoundary" />
         </Source>
         <Source type="geojson" data={data[1]}>
           <Layer {...stationStyle} id="stationPt" />

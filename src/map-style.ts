@@ -26,12 +26,14 @@ export const lotPolyStyle: FillLayer = {
   },
 };
 
-export const dataLayerLine: LineLayer = {
+export const cBoundaryPolyStyle: LineLayer = {
   id: 'dataLine',
   type: 'line',
   layout: {},
   paint: {
-    'line-width': 3,
+    'line-width': 2.5,
+    'line-color': '#36454F',
+    'line-opacity': 0.7,
   },
 };
 
