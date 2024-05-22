@@ -13,7 +13,7 @@ import { GeoJsonLayer } from '@deck.gl/layers';
 import type { GeoJsonLayerProps } from '@deck.gl/layers';
 import './App.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import Map, { Source, Layer, MapRef, Popup } from 'react-map-gl';
+import Map, { Source, Layer, MapRef, Popup, useControl } from 'react-map-gl';
 import type { CircleLayer } from 'react-map-gl';
 import { MapViewState } from '@deck.gl/core';
 import type { FeatureCollection } from 'geojson';
@@ -26,6 +26,7 @@ import {
   lotPtLabel,
   stationLabel,
   stationStyle,
+  structureStyle,
 } from './map-style';
 import { uniqueValue, addDropdown } from './Query';
 import { LngLatBounds } from 'react-map-gl';
@@ -33,9 +34,8 @@ import { features } from 'process';
 import bbox from '@turf/bbox';
 import bboxPolygon from '@turf/bbox-polygon';
 import center from '@turf/center';
-import { Label } from '@amcharts/amcharts5';
-import { any } from '@amcharts/amcharts5/.internal/core/util/Array';
-
+import LegendControl from 'mapboxgl-legend';
+import 'mapboxgl-legend/dist/style.css';
 // Mapbox for React: https://visgl.github.io/react-map-gl/
 
 function App() {
@@ -47,10 +47,12 @@ function App() {
   const [allData, setAllData] = useState<FeatureCollection>();
   const [pointData, setPointData] = useState<FeatureCollection>();
   const [cboundaryData, setCboundaryData] = useState<FeatureCollection>();
+  const [structureData, setStructureData] = useState<FeatureCollection>();
   const [clickedInfo, setClickedInfo] = useState<any>(null);
   const [clickedBool, setClickedBool] = useState<boolean>(false);
   const [filteredGeojson, setFilteredGeojson] = useState<FeatureCollection>(emptyFeatureCollection);
   const [labelGeojson, setLabelGeojson] = useState<FeatureCollection>(emptyFeatureCollection1);
+  const [inputValue, setInputValue] = useState<any>();
 
   // Load Geojson Data
   useEffect(() => {
@@ -119,11 +121,20 @@ function App() {
         setCboundaryData(json);
       })
       .catch((err) => console.error('Could not load data', err));
+
+    fetch(
+      'https://raw.githubusercontent.com/EijiGorilla/EijiGorilla.github.io/master/WebApp/ArcGIS_API_for_JavaScript/Sample/MMSP_Structure_Affected.geojson',
+    )
+      .then((resp) => resp.json())
+      .then((json) => {
+        setStructureData(json);
+      })
+      .catch((err) => console.error('Could not load data', err));
   }, []);
 
   const data = useMemo(() => {
-    return [allData, pointData, labelGeojson, cboundaryData];
-  }, [allData, pointData, labelGeojson, cboundaryData]);
+    return [allData, pointData, labelGeojson, cboundaryData, structureData];
+  }, [allData, pointData, labelGeojson, cboundaryData, structureData]);
 
   // Dropdown filter
   const handleMunicipalityChange = (obj: any) => {
@@ -155,32 +166,35 @@ function App() {
   // good sample for filtering
   // https://labs.mapbox.com/impact-tools/finder/
   // Zoom to bounds
-  function zoomToLayer(search_property: any, zoom: any, data: any) {
-    data[0]?.features.forEach((feature: any) => {
+  function zoomToLayer(search_property: any, zoom: any, data: any, search_value: any) {
+    data?.features.forEach((feature: any) => {
       // if (feature.properties['Station1'].includes('Tandang Sora')) { // includes keyword
       //   console.log(feature);
       // }
-      if (feature.properties[search_property] === stationSelected.field1) {
+      if (feature.properties[search_property] === search_value) {
         filteredGeojson.features.push(feature);
       }
     });
 
-    const [minLng, minLat, maxLng, maxLat] = bbox(filteredGeojson);
-
-    mapRef.current.fitBounds(
-      [
-        [minLng, minLat],
-        [maxLng, maxLat],
-      ],
-      { padding: 40, duration: 1000, zoom: zoom },
-    );
+    if (filteredGeojson.features.length === 0) {
+      return console.log('Your input does not exist.');
+    } else {
+      const [minLng, minLat, maxLng, maxLat] = bbox(filteredGeojson);
+      mapRef.current.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat],
+        ],
+        { padding: 40, duration: 1000, zoom: zoom },
+      );
+    }
   }
 
   useEffect(() => {
     if (stationSelected && stationSelected.field1 !== 'All') {
       // Reset filtered geojson layer
       setFilteredGeojson(emptyFeatureCollection);
-      zoomToLayer('Station1', 16, data);
+      zoomToLayer('Station1', 16, data[0], stationSelected.field1);
     } else if (stationSelected && stationSelected.field1 === 'All') {
       setFilteredGeojson(emptyFeatureCollection);
       data[0]?.features.forEach((feature: any) => {
@@ -196,7 +210,15 @@ function App() {
       );
     }
   }, [stationSelected]);
-  // test
+
+  const handleSearch = (event: any) => {
+    event.preventDefault();
+    if (inputValue) {
+      setFilteredGeojson(emptyFeatureCollection);
+      zoomToLayer('CN', 17, data[0], inputValue);
+    }
+  };
+
   // Style CSS
   const customstyles = {
     option: (styles: any, { data, isDisabled, isFocused, isSelected }: any) => {
@@ -220,11 +242,13 @@ function App() {
     singleValue: (defaultStyles: any) => ({ ...defaultStyles, color: '#fff' }),
   };
 
+  // <div className="parent h-screen flex flex-col bg-[#555555]">
   return (
-    <div className="parent h-screen flex flex-col bg-slate-500">
+    <div className="parent h-screen flex flex-col bg-[#555555]">
+      {/* Header */}
       <header
         id="header"
-        className="flex items-stretch h-fit p-4 m-1 bg-slate-800 text-slate-100 text-3xl/10"
+        className="flex items-stretch h-fit p-4 m-1 bg-[#2b2b2b] text-slate-100 text-3xl/10"
       >
         <img
           src="https://EijiGorilla.github.io/Symbols/Projec_Logo/OCG.svg"
@@ -233,7 +257,7 @@ function App() {
         />
         Land Acquisition (Sample)
         {/* Dropdown filter */}
-        <div className="text-sm">
+        <div className="text-sm absolute right-20">
           <Select
             placeholder="Select Station"
             value={stationSelected}
@@ -244,69 +268,129 @@ function App() {
           />
         </div>
       </header>
-      <Map
-        ref={mapRef}
-        mapboxAccessToken="pk.eyJ1IjoiZWlqaW1hdHN1emFraSIsImEiOiJjbHdhOTN2OGUwN3RyMnFwYWM0azE0c2E1In0.79awJ1I9uAJLQHWZ7btSFA"
-        // style={{ width: 800, height: 1000 }}
-        initialViewState={{
-          longitude: 121.0319746,
-          latitude: 14.6821565,
-          zoom: 14,
-        }}
-        onClick={clickedOn}
-        interactiveLayerIds={[
-          'lotPoly',
-          'stationPt',
-          'stationPtLabel',
-          'lotPt',
-          'lotPtLabels',
-          'lotPolyBoundary',
-        ]}
-        mapStyle={'mapbox://styles/mapbox/streets-v9'}
-      >
-        {/* why use useMemo? */}
-        <Source type="geojson" data={data[0]}>
-          <Layer {...lotPolyStyle} id="lotPoly" />
-          <Layer
-            {...lotPolyStyle}
-            filter={stationSelected && stationSelected.field1 === 'All' ? filter_all : filter}
-            id="lotPoly"
-          />
-        </Source>
-        <Source type="geojson" data={data[3]}>
-          <Layer {...cBoundaryPolyStyle} id="lotPolyBoundary" />
-        </Source>
-        <Source type="geojson" data={data[1]}>
-          <Layer {...stationStyle} id="stationPt" />
-          <Layer {...stationLabel} id="stationPtLabel" />
-        </Source>
-        <Source type="geojson" data={data[2]}>
-          <Layer {...lotPtStyle} id="lotPt" />
-          <Layer
-            {...lotPtLabel}
-            filter={
-              stationSelected && stationSelected.field1 !== 'All'
-                ? ['in', 'Station1', stationSelected.field1]
-                : filter_all
-            }
-            id="lotPtLabels"
-          />
-        </Source>
 
-        {clickedInfo && (
-          <div
-            className="w-30 h-10 absolute z-99 bg-white p-3 pt-1"
-            style={{ left: clickedInfo.x, top: clickedInfo.y }}
-          >
-            <div>
-              Station: <b>{clickedInfo.feature.properties.Station1}</b>
+      {/* Map Frame */}
+
+      <div className="grid grid-cols-78/22 h-full mx-1 mb-1">
+        <Map
+          ref={mapRef}
+          mapboxAccessToken="pk.eyJ1IjoiZWlqaW1hdHN1emFraSIsImEiOiJjbHdhOTN2OGUwN3RyMnFwYWM0azE0c2E1In0.79awJ1I9uAJLQHWZ7btSFA"
+          // style={{ width: 800, height: 1000 }}
+          initialViewState={{
+            longitude: 121.0319746,
+            latitude: 14.6821565,
+            zoom: 14,
+          }}
+          onClick={clickedOn}
+          interactiveLayerIds={[
+            'lotPoly',
+            'stationPt',
+            'stationPtLabel',
+            'lotPt',
+            'lotPtLabels',
+            'lotPolyBoundary',
+            'structurePoly',
+          ]}
+          // https://docs.mapbox.com/api/maps/styles/
+          mapStyle={'mapbox://styles/mapbox/dark-v11'}
+        >
+          {/* why use useMemo? */}
+          {/* Lot Layer */}
+          <Source type="geojson" data={data[0]}>
+            <Layer {...lotPolyStyle} id="lotPoly" />
+            <Layer
+              {...lotPolyStyle}
+              filter={stationSelected && stationSelected.field1 === 'All' ? filter_all : filter}
+              id="lotPoly"
+            />
+          </Source>
+          {/* Construction Boundary Layer */}
+          <Source type="geojson" data={data[3]}>
+            <Layer {...cBoundaryPolyStyle} id="lotPolyBoundary" />
+          </Source>
+          {/* Station Point Layer */}
+          <Source type="geojson" data={data[1]}>
+            <Layer {...stationStyle} id="stationPt" />
+            <Layer {...stationLabel} id="stationPtLabel" />
+          </Source>
+          {/* Lot Point Layer for Labels */}
+          <Source type="geojson" data={data[2]}>
+            <Layer {...lotPtStyle} id="lotPt" />
+            <Layer
+              {...lotPtLabel}
+              filter={
+                stationSelected && stationSelected.field1 !== 'All'
+                  ? ['in', 'Station1', stationSelected.field1]
+                  : filter_all
+              }
+              id="lotPtLabels"
+            />
+          </Source>
+          {/* Affected Structure Layer */}
+          <Source type="geojson" data={data[4]}>
+            <Layer {...structureStyle} id="structurePoly" />
+          </Source>
+
+          {/* Popup */}
+          {clickedInfo && (
+            <div
+              className="w-30 h-10 absolute z-99 bg-white p-3 pt-1 rounded-md"
+              style={{ left: clickedInfo.x, top: clickedInfo.y }}
+            >
+              <div>
+                Station: <b>{clickedInfo.feature.properties.Station1}</b>
+              </div>
+              <div>
+                Lot Id: <b>{clickedInfo.feature.properties.Id}</b>
+              </div>
             </div>
-            <div>
-              Lot Id: <b>{clickedInfo.feature.properties.Id}</b>
+          )}
+          {/* Search Widget */}
+          <form className="max-w-sm ml-auto">
+            <label
+              // for="default-search"
+              className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
+            >
+              Search
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none bg-dark-700">
+                <svg
+                  className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                  />
+                </svg>
+              </div>
+              <input
+                type="search"
+                id="default-search"
+                className="block w-3/4 p-4 ps-10 text-sm text-white border border-[#949494] rounded-lg bg-[#2b2b2b] focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500"
+                placeholder="Search CN for Lots..."
+                required
+                onChange={(event) => setInputValue(event.target.value)}
+              />
+              <button
+                type="submit"
+                className="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                onClick={handleSearch}
+              >
+                Search
+              </button>
             </div>
-          </div>
-        )}
-      </Map>
+          </form>
+        </Map>
+        <div className="">test</div>
+      </div>
     </div>
   );
 }

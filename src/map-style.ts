@@ -1,5 +1,7 @@
-import type { FillLayer, LineLayer, Layer, SymbolLayer, CircleLayer } from 'mapbox-gl';
+import type { FillLayer, LineLayer, SymbolLayer, CircleLayer, FillExtrusionLayer } from 'mapbox-gl';
+
 import { statusLotColor } from './statusUniqueValues';
+import LegendControl from 'mapboxgl-legend';
 
 // For more information on data-driven styles, see https://www.mapbox.com/help/gl-dds-ref/
 // Lot polygon style
@@ -24,6 +26,9 @@ export const lotPolyStyle: FillLayer = {
     'fill-opacity': 0.8,
     'fill-outline-color': '#36454f',
   },
+  metadata: {
+    name: 'Land Acquisition',
+  },
 };
 
 export const cBoundaryPolyStyle: LineLayer = {
@@ -43,10 +48,10 @@ export const stationLabel: SymbolLayer = {
   type: 'symbol',
   // source: textGeoJsonSource,
   paint: {
-    'text-color': '#0000FF', //Color of your choice
-    'text-halo-blur': 5,
-    'text-halo-color': '#ffffff',
-    'text-halo-width': 1,
+    'text-color': '#ffffff', //Color of your choice
+    'text-halo-blur': 0,
+    'text-halo-color': '#000000',
+    'text-halo-width': 0.5,
     'text-opacity': 1,
   },
   layout: {
@@ -55,8 +60,8 @@ export const stationLabel: SymbolLayer = {
     'text-rotation-alignment': 'auto',
     'text-allow-overlap': true,
     'text-anchor': 'top',
-    'text-size': 12,
-    'text-line-height': 1,
+    'text-size': 14,
+    'text-line-height': 10,
     'text-offset': [0, 0],
   },
 };
@@ -102,5 +107,28 @@ export const lotPtLabel: SymbolLayer = {
     'text-size': 10,
     'text-line-height': 1,
     'text-offset': [0, 0],
+  },
+};
+
+export const structureStyle: FillExtrusionLayer = {
+  id: 'data',
+  type: 'fill-extrusion',
+  paint: {
+    // 'fill-extrusion-color': '#ff0000',
+    'fill-extrusion-height': ['get', 'height'],
+    'fill-extrusion-base': 0,
+    'fill-extrusion-opacity': 0.8,
+    'fill-extrusion-color': {
+      property: 'height',
+      default: '#fff5eb',
+      stops: [
+        [1, statusLotColor[0]],
+        [2, statusLotColor[1]],
+        [3, statusLotColor[2]],
+        [4, statusLotColor[3]],
+        [5, statusLotColor[4]],
+        [6, statusLotColor[5]],
+      ],
+    },
   },
 };
