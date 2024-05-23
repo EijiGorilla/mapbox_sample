@@ -27,6 +27,7 @@ import {
   stationLabel,
   stationStyle,
   structureStyle,
+  highlightedLotPolyStyle,
 } from './map-style';
 import { uniqueValue, addDropdown } from './Query';
 import { LngLatBounds } from 'react-map-gl';
@@ -36,11 +37,21 @@ import bboxPolygon from '@turf/bbox-polygon';
 import center from '@turf/center';
 import LegendControl from 'mapboxgl-legend';
 import 'mapboxgl-legend/dist/style.css';
+import {
+  statusLotColor,
+  statusLotLabel,
+  statusLotQuery,
+  statusStructureColor,
+  statusStructureLabel,
+  statusStructureQuery,
+} from './statusUniqueValues';
+import * as turf from '@turf/turf';
 // Mapbox for React: https://visgl.github.io/react-map-gl/
 
 function App() {
   let emptyFeatureCollection: any = { type: 'FeatureCollection', features: [] };
   let emptyFeatureCollection1: any = { type: 'FeatureCollection', features: [] };
+  let emptyFeatureCollection2: any = { type: 'FeatureCollection', features: [] };
   const mapRef = useRef<MapRef | undefined | any>();
   const [initStations, setInitStations] = useState<null | undefined | any>();
   const [stationSelected, setStationSelected] = useState<null | any>(null);
@@ -53,6 +64,15 @@ function App() {
   const [filteredGeojson, setFilteredGeojson] = useState<FeatureCollection>(emptyFeatureCollection);
   const [labelGeojson, setLabelGeojson] = useState<FeatureCollection>(emptyFeatureCollection1);
   const [inputValue, setInputValue] = useState<any>();
+
+  // Legend
+  const [lotLayerToggle, setLotLayerToggle] = useState<boolean>(true);
+  const [legendClickedCategory, setLegendClickedCategory] = useState<any>();
+  const [legendClickedValue, setLegendClickedValue] = useState<any>();
+  const [structureLayerToggle, setStructureLayerToggle] = useState<boolean>(true);
+  const [legendStructureClickedCategory, setLegendStructureClickedCategory] = useState<any>();
+  const [legendStructureClickedValue, setLegendStructureClickedValue] = useState<any>();
+  const [resetLegendButton, setResetLegendButton] = useState<any>('unclicked');
 
   // Load Geojson Data
   useEffect(() => {
@@ -133,8 +153,12 @@ function App() {
   }, []);
 
   const data = useMemo(() => {
-    return [allData, pointData, labelGeojson, cboundaryData, structureData];
-  }, [allData, pointData, labelGeojson, cboundaryData, structureData]);
+    return [allData, pointData, labelGeojson, structureData];
+  }, [allData, pointData, labelGeojson, structureData]);
+
+  const counstruction_boundary = useMemo(() => {
+    return cboundaryData;
+  }, [cboundaryData]);
 
   // Dropdown filter
   const handleMunicipalityChange = (obj: any) => {
@@ -157,7 +181,7 @@ function App() {
   );
 
   // Filter
-  const filter = useMemo(
+  const filter_station = useMemo(
     () => ['in', 'Station1', stationSelected && stationSelected.field1],
     [stationSelected],
   );
@@ -211,13 +235,74 @@ function App() {
     }
   }, [stationSelected]);
 
+  // Search and Zoom
   const handleSearch = (event: any) => {
     event.preventDefault();
+    event.stopPropagation();
     if (inputValue) {
       setFilteredGeojson(emptyFeatureCollection);
       zoomToLayer('CN', 17, data[0], inputValue);
     }
   };
+
+  // Legend
+  // Land Acquisition: when legend is clicked
+  const filter_lot_legend_all = useMemo(
+    () => ['all', ['in', 'StatusNVS3', legendClickedValue], ['!=', 'Id', true]],
+    [legendClickedValue, stationSelected],
+  );
+
+  const filter_lot_legend = useMemo(
+    () => [
+      'all',
+      ['in', 'StatusNVS3', legendClickedValue],
+      ['in', 'Station1', stationSelected && stationSelected.field1],
+    ],
+    [legendClickedValue, stationSelected],
+  );
+
+  // Land Acquisition: when layer toggle is clicked and resets
+  const filter_lot_reset_all = useMemo(() => ['!=', 'Id', true], [resetLegendButton]);
+  const filter_lot_reset = useMemo(
+    () => [
+      'all',
+      ['>=', 'StatusNVS3', 0],
+      ['in', 'Station1', stationSelected && stationSelected.field1],
+    ],
+    [resetLegendButton, stationSelected],
+  );
+
+  //
+  useEffect(() => {
+    if (legendClickedCategory) {
+      const status_value = statusLotQuery.find(
+        (emp: any) => emp.category === legendClickedCategory,
+      ).value;
+      setLegendClickedValue(status_value);
+    }
+  }, [legendClickedCategory]);
+
+  // Affected Structure
+  const filter_structure_legend_all = useMemo(
+    () => ['all', ['in', 'height', legendStructureClickedValue], ['!=', 'Id', true]],
+    [legendStructureClickedValue, stationSelected],
+  );
+  const filter_structure_legend = useMemo(
+    () => [
+      'all',
+      ['in', 'height', legendStructureClickedValue],
+      ['in', 'Station1', stationSelected && stationSelected.field1],
+    ],
+    [legendStructureClickedValue, stationSelected],
+  );
+  useEffect(() => {
+    if (legendStructureClickedCategory) {
+      const status_value = statusStructureQuery.find(
+        (emp: any) => emp.category === legendStructureClickedCategory,
+      ).value;
+      setLegendStructureClickedValue(status_value);
+    }
+  }, [legendStructureClickedCategory]);
 
   // Style CSS
   const customstyles = {
@@ -242,10 +327,10 @@ function App() {
     singleValue: (defaultStyles: any) => ({ ...defaultStyles, color: '#fff' }),
   };
 
-  // <div className="parent h-screen flex flex-col bg-[#555555]">
+  // https://flowbite.com/blocks/application/shells/
   return (
     <div className="parent h-screen flex flex-col bg-[#555555]">
-      {/* Header */}
+      {/* ---------------- Header -------------------------*/}
       <header
         id="header"
         className="flex items-stretch h-fit p-4 m-1 bg-[#2b2b2b] text-slate-100 text-3xl/10"
@@ -269,9 +354,80 @@ function App() {
         </div>
       </header>
 
-      {/* Map Frame */}
+      {/*----------------- Three Frames -----------------*/}
+      <div className="grid grid-cols-15/65/20 h-full mx-1 mb-1">
+        {/* Legend */}
+        <div>
+          {/* Land Acquisition Layer */}
+          <div id="state-legend" className="bg-[#2b2b2b] mr-1 mb-1">
+            <div className="flex items-center mb-2">
+              <input
+                defaultChecked={true}
+                id="checked-checkbox"
+                type="checkbox"
+                value=""
+                onChange={(event) => setLotLayerToggle(event.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <label className="ms-2 text-sm font-medium text-white-900 dark:text-gray-300">
+                <b>Land Acquisition</b>
+              </label>
+            </div>
+            {/* <h4 className="text-md text-center">Status of Land Acquisition</h4> */}
+            {statusLotLabel.map((label: any, index: any) => {
+              return (
+                <div
+                  key={index}
+                  onClick={(event) => setLegendClickedCategory(event.currentTarget.innerText)}
+                >
+                  <span style={{ backgroundColor: statusLotColor[index] }}></span>
+                  {label}
+                </div>
+              );
+            })}
+          </div>
+          {/*  */}
+          {/* Affected Structure */}
+          <div id="state-legend" className="bg-[#2b2b2b] mr-1">
+            <div className="flex items-center mb-2">
+              <input
+                defaultChecked={true}
+                id="checked-checkbox"
+                type="checkbox"
+                value=""
+                onChange={(event) => setStructureLayerToggle(event.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <label className="ms-2 text-sm font-medium text-white-900 dark:text-gray-300">
+                <b>Affected Structure</b>
+              </label>
+            </div>
+            {/* <h4 className="text-md text-center">Status of Land Acquisition</h4> */}
+            {statusStructureLabel.map((label: any, index: any) => {
+              return (
+                <div
+                  key={index}
+                  onClick={(event) =>
+                    setLegendStructureClickedCategory(event.currentTarget.innerText)
+                  }
+                >
+                  <span style={{ backgroundColor: statusStructureColor[index] }}></span>
+                  {label}
+                </div>
+              );
+            })}
+          </div>
+          {/* <button
+            onClick={(event) =>
+              setResetLegendButton(resetLegendButton === 'unclicked' ? 'clicked' : 'unclicked')
+            }
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          >
+            Button
+          </button> */}
+        </div>
 
-      <div className="grid grid-cols-78/22 h-full mx-1 mb-1">
+        {/* Map Frame */}
         <Map
           ref={mapRef}
           mapboxAccessToken="pk.eyJ1IjoiZWlqaW1hdHN1emFraSIsImEiOiJjbHdhOTN2OGUwN3RyMnFwYWM0azE0c2E1In0.79awJ1I9uAJLQHWZ7btSFA"
@@ -290,23 +446,58 @@ function App() {
             'lotPtLabels',
             'lotPolyBoundary',
             'structurePoly',
+            'highlight-lot',
           ]}
           // https://docs.mapbox.com/api/maps/styles/
           mapStyle={'mapbox://styles/mapbox/dark-v11'}
         >
           {/* why use useMemo? */}
+          {/* Construction Boundary Layer */}
+
           {/* Lot Layer */}
           <Source type="geojson" data={data[0]}>
             <Layer {...lotPolyStyle} id="lotPoly" />
             <Layer
               {...lotPolyStyle}
-              filter={stationSelected && stationSelected.field1 === 'All' ? filter_all : filter}
+              filter={
+                stationSelected && stationSelected.field1 === 'All' ? filter_all : filter_station
+              }
+              id="lotPoly"
+              layout={{ visibility: lotLayerToggle ? 'visible' : 'none' }}
+            />
+            <Layer
+              {...lotPolyStyle}
+              filter={
+                legendClickedValue && stationSelected && stationSelected.field1 !== 'All'
+                  ? filter_lot_legend
+                  : legendClickedValue && stationSelected && stationSelected.field1 === 'All'
+                    ? filter_lot_legend_all
+                    : filter_lot_legend_all
+              }
               id="lotPoly"
             />
+            {/* <Layer {...lotPolyStyle} filter={filter_lot_reset_all} id="lotPoly" /> */}
           </Source>
-          {/* Construction Boundary Layer */}
-          <Source type="geojson" data={data[3]}>
+          <Source type="geojson" data={data[0]}>
+            <Layer
+              {...highlightedLotPolyStyle}
+              filter={inputValue === undefined ? ['==', 'CN', ''] : ['==', 'CN', inputValue]}
+              id="highlight-lot"
+            />
+          </Source>
+          {/*  */}
+          {/* Construction Boundary */}
+          <Source type="geojson" data={counstruction_boundary}>
             <Layer {...cBoundaryPolyStyle} id="lotPolyBoundary" />
+            <Layer
+              {...cBoundaryPolyStyle}
+              filter={
+                stationSelected && stationSelected.field1 === 'All' ? filter_all : filter_station
+              }
+              id="lotPolyBoundary"
+              key="boundaries"
+              // layout={{ visibility: 'none' }}
+            />
           </Source>
           {/* Station Point Layer */}
           <Source type="geojson" data={data[1]}>
@@ -326,9 +517,31 @@ function App() {
               id="lotPtLabels"
             />
           </Source>
+          {/*  */}
           {/* Affected Structure Layer */}
-          <Source type="geojson" data={data[4]}>
+          <Source type="geojson" data={data[3]}>
             <Layer {...structureStyle} id="structurePoly" />
+            <Layer
+              {...structureStyle}
+              filter={
+                stationSelected && stationSelected.field1 === 'All' ? filter_all : filter_station
+              }
+              layout={{ visibility: structureLayerToggle ? 'visible' : 'none' }}
+              id="structurePoly"
+            />
+            <Layer
+              {...structureStyle}
+              filter={
+                legendStructureClickedValue && stationSelected && stationSelected.field1 !== 'All'
+                  ? filter_structure_legend
+                  : legendStructureClickedValue &&
+                      stationSelected &&
+                      stationSelected.field1 === 'All'
+                    ? filter_structure_legend_all
+                    : filter_structure_legend_all
+              }
+              id="structurePoly"
+            />
           </Source>
 
           {/* Popup */}
@@ -389,6 +602,8 @@ function App() {
             </div>
           </form>
         </Map>
+
+        {/* Chart Frame */}
         <div className="">test</div>
       </div>
     </div>

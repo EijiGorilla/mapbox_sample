@@ -9,6 +9,9 @@ export const lotPolyStyle: FillLayer = {
   id: 'data',
   type: 'fill',
   //   filter: ['==', 'class', 'park'],
+  // layout: {
+  //   visibility: 'none', // or 'visible'
+  // },
   paint: {
     'fill-color': {
       property: 'StatusNVS3',
@@ -28,6 +31,21 @@ export const lotPolyStyle: FillLayer = {
   },
   metadata: {
     name: 'Land Acquisition',
+  },
+};
+
+export const highlightedLotPolyStyle: FillLayer = {
+  id: 'data',
+  type: 'fill',
+  //   filter: ['==', 'class', 'park'],
+  // layout: {
+  //   visibility: 'none', // or 'visible'
+  // },
+  paint: {
+    'fill-color': '#00FFFF',
+
+    'fill-opacity': 0.8,
+    'fill-outline-color': '#36454f',
   },
 };
 
