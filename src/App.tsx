@@ -230,6 +230,7 @@ function App() {
       zoomToLayer('Station1', 16, data[0], stationSelected.field1);
       //
     } else if (stationSelected && stationSelected.field1 === 'All') {
+      setChartData(updatechartData(data[0]?.features, 'All'));
       setFilteredGeojson(emptyFeatureCollection);
       data[0]?.features.forEach((feature: any) => {
         filteredGeojson.features.push(feature);
