@@ -44,9 +44,8 @@ import {
   statusStructureLabel,
   statusStructureQuery,
 } from './statusUniqueValues';
-import { Tabs } from 'flowbite';
-import type { TabsOptions, TabsInterface, TabItem } from 'flowbite';
-import type { InstanceOptions } from 'flowbite';
+import 'flowbite';
+
 import LotChart from './components/Lot_Chart';
 
 // Mapbox for React: https://visgl.github.io/react-map-gl/
@@ -367,68 +366,163 @@ function App() {
       </header>
 
       {/*----------------- Three Frames -----------------*/}
-      <div className="grid grid-cols-15/65/20 h-full mx-1 mb-1">
+      <div className="grid grid-cols-16/64/20 h-full mx-1 mb-1">
         {/* Legend */}
-        <div>
-          {/* Land Acquisition Layer */}
-          <div id="state-legend" className="bg-[#2b2b2b] mr-1 mb-1">
-            <div className="flex items-center mb-2">
-              <input
-                defaultChecked={true}
-                id="checked-checkbox"
-                type="checkbox"
-                value=""
-                onChange={(event) => setLotLayerToggle(event.target.checked)}
-                className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label className="ms-2 text-sm font-medium text-white-900 dark:text-gray-300">
-                <b>Land Acquisition</b>
-              </label>
-            </div>
-            {/* <h4 className="text-md text-center">Status of Land Acquisition</h4> */}
-            {statusLotLabel.map((label: any, index: any) => {
-              return (
-                <div
-                  key={index}
-                  onClick={(event) => setLegendClickedCategory(event.currentTarget.innerText)}
+        <div className="">
+          {/* Application shell */}
+          <ul className="space-y-2 bg-[#2b2b2b] mr-1 mb-1 h-full pt-5">
+            <li>
+              <button
+                type="button"
+                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-500 dark:text-white dark:hover:bg-gray-700"
+                aria-controls="dropdown-pages"
+                data-collapse-toggle="dropdown-pages"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="flex-shrink-0 w-6 h-6 text-gray-300 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <span style={{ backgroundColor: statusLotColor[index] }}></span>
-                  {label}
-                </div>
-              );
-            })}
-          </div>
-          {/*  */}
-          {/* Affected Structure */}
-          <div id="state-legend" className="bg-[#2b2b2b] mr-1">
-            <div className="flex items-center mb-2">
-              <input
-                defaultChecked={true}
-                id="checked-checkbox"
-                type="checkbox"
-                value=""
-                onChange={(event) => setStructureLayerToggle(event.target.checked)}
-                className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label className="ms-2 text-sm font-medium text-white-900 dark:text-gray-300">
-                <b>Affected Structure</b>
-              </label>
-            </div>
-            {/* <h4 className="text-md text-center">Status of Land Acquisition</h4> */}
-            {statusStructureLabel.map((label: any, index: any) => {
-              return (
-                <div
-                  key={index}
-                  onClick={(event) =>
-                    setLegendStructureClickedCategory(event.currentTarget.innerText)
-                  }
+                  <path
+                    fillRule="evenodd"
+                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+                <span className="flex-1 ml-3 text-left whitespace-nowrap text-gray-100">
+                  Layers
+                </span>
+                <svg
+                  aria-hidden="true"
+                  className="w-6 h-6"
+                  fill="gray"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <span style={{ backgroundColor: statusStructureColor[index] }}></span>
-                  {label}
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+              </button>
+              <ul id="dropdown-pages" className="hidden py-2 space-y-2">
+                <div id="state-legend" className="bg-[#2b2b2b] mb-1 ml-1.5">
+                  <div className="flex items-center mb-2">
+                    <input
+                      defaultChecked={true}
+                      id="checked-checkbox"
+                      type="checkbox"
+                      value=""
+                      onChange={(event) => setLotLayerToggle(event.target.checked)}
+                      className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <label className="ms-2 text-sm font-medium text-white-900 dark:text-gray-300">
+                      <b>Land Acquisition</b>
+                    </label>
+                  </div>
+                  {/* <h4 className="text-md text-center">Status of Land Acquisition</h4> */}
+                  {statusLotLabel.map((label: any, index: any) => {
+                    return (
+                      <div
+                        key={index}
+                        onClick={(event) => setLegendClickedCategory(event.currentTarget.innerText)}
+                      >
+                        <span style={{ backgroundColor: statusLotColor[index] }}></span>
+                        {label}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+                <div id="state-legend" className="bg-[#2b2b2b] mr-1 ml-1.5">
+                  <div className="flex items-center mb-2">
+                    <input
+                      defaultChecked={true}
+                      id="checked-checkbox"
+                      type="checkbox"
+                      value=""
+                      onChange={(event) => setStructureLayerToggle(event.target.checked)}
+                      className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <label className="ms-2 text-sm font-medium text-white-900 dark:text-gray-300">
+                      <b>Affected Structure</b>
+                    </label>
+                  </div>
+                  {/* <h4 className="text-md text-center">Status of Land Acquisition</h4> */}
+                  {statusStructureLabel.map((label: any, index: any) => {
+                    return (
+                      <div
+                        key={index}
+                        onClick={(event) =>
+                          setLegendStructureClickedCategory(event.currentTarget.innerText)
+                        }
+                      >
+                        <span style={{ backgroundColor: statusStructureColor[index] }}></span>
+                        {label}
+                      </div>
+                    );
+                  })}
+                </div>
+              </ul>
+            </li>{' '}
+            {/*End of Pages*/}
+            <li>
+              <a
+                href="#"
+                className="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-500 dark:hover:bg-gray-700 group"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="w-6 h-6 text-gray-300 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
+                  <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
+                </svg>
+                <span className="ml-3 text-gray-100">Chart</span>
+              </a>
+            </li>
+            <li>
+              <button
+                type="button"
+                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-500 dark:text-white dark:hover:bg-gray-700"
+                aria-controls="dropdown-sales"
+                data-collapse-toggle="dropdown-sales"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="flex-shrink-0 w-6 h-6 text-gray-300 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+                <span className="flex-1 ml-3 text-left whitespace-nowrap text-gray-100">Note</span>
+                <svg
+                  aria-hidden="true"
+                  className="w-6 h-6"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+              </button>
+            </li>
+          </ul>
           {/* <button
             onClick={(event) =>
               setResetLegendButton(resetLegendButton === 'unclicked' ? 'clicked' : 'unclicked')
