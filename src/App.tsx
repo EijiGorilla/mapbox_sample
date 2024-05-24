@@ -29,9 +29,8 @@ import {
   structureStyle,
   highlightedLotPolyStyle,
 } from './map-style';
-import { uniqueValue, addDropdown } from './Query';
+import { uniqueValue, addDropdown, updatechartData } from './Query';
 import { LngLatBounds } from 'react-map-gl';
-import { features } from 'process';
 import bbox from '@turf/bbox';
 import bboxPolygon from '@turf/bbox-polygon';
 import center from '@turf/center';
@@ -45,13 +44,17 @@ import {
   statusStructureLabel,
   statusStructureQuery,
 } from './statusUniqueValues';
-import * as turf from '@turf/turf';
+import { Tabs } from 'flowbite';
+import type { TabsOptions, TabsInterface, TabItem } from 'flowbite';
+import type { InstanceOptions } from 'flowbite';
+import LotChart from './components/Lot_Chart';
+
 // Mapbox for React: https://visgl.github.io/react-map-gl/
 
 function App() {
   let emptyFeatureCollection: any = { type: 'FeatureCollection', features: [] };
   let emptyFeatureCollection1: any = { type: 'FeatureCollection', features: [] };
-  let emptyFeatureCollection2: any = { type: 'FeatureCollection', features: [] };
+
   const mapRef = useRef<MapRef | undefined | any>();
   const [initStations, setInitStations] = useState<null | undefined | any>();
   const [stationSelected, setStationSelected] = useState<null | any>(null);
@@ -73,6 +76,9 @@ function App() {
   const [legendStructureClickedCategory, setLegendStructureClickedCategory] = useState<any>();
   const [legendStructureClickedValue, setLegendStructureClickedValue] = useState<any>();
   const [resetLegendButton, setResetLegendButton] = useState<any>('unclicked');
+
+  // Chart data
+  const [chartData, setChartData] = useState<any>();
 
   // Load Geojson Data
   useEffect(() => {
@@ -119,6 +125,9 @@ function App() {
         });
 
         labelGeojson.features = labelPointFeature;
+
+        // Chart data
+        setChartData(updatechartData(json.features, 'All'));
       })
       .catch((err) => console.error('Could not load data', err));
   }, []);
@@ -216,14 +225,17 @@ function App() {
 
   useEffect(() => {
     if (stationSelected && stationSelected.field1 !== 'All') {
+      setChartData(updatechartData(data[0]?.features, stationSelected.field1));
       // Reset filtered geojson layer
       setFilteredGeojson(emptyFeatureCollection);
       zoomToLayer('Station1', 16, data[0], stationSelected.field1);
+      //
     } else if (stationSelected && stationSelected.field1 === 'All') {
       setFilteredGeojson(emptyFeatureCollection);
       data[0]?.features.forEach((feature: any) => {
         filteredGeojson.features.push(feature);
       });
+
       const [minLng, minLat, maxLng, maxLat] = bbox(filteredGeojson);
       mapRef.current.fitBounds(
         [
@@ -604,7 +616,106 @@ function App() {
         </Map>
 
         {/* Chart Frame */}
-        <div className="">test</div>
+        <div className="bg-[#2b2b2b] ml-1">
+          <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
+            <ul
+              className="flex flex-wrap -mb-px text-sm font-medium text-center"
+              id="default-styled-tab"
+              data-tabs-toggle="#default-styled-tab-content"
+              data-tabs-active-classes="text-white hover:text-white-600 dark:text-white-500 dark:hover:text-white-500 border-blue-500 dark:border-white-500"
+              data-tabs-inactive-classes="dark:border-transparent text-gray-500 hover:text-gray-400 dark:text-gray-400 border-gray-100 hover:border-blue-500 dark:border-gray-700 dark:hover:text-gray-300"
+              role="tablist"
+            >
+              <li className="me-2" role="presentation">
+                <button
+                  className="inline-block p-4 border-b-2 rounded-t-lg"
+                  id="profile-styled-tab"
+                  data-tabs-target="#styled-profile"
+                  type="button"
+                  role="tab"
+                  aria-controls="profile"
+                  aria-selected="false"
+                >
+                  Land
+                </button>
+              </li>
+              <li className="me-2" role="presentation">
+                <button
+                  className="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                  id="dashboard-styled-tab"
+                  data-tabs-target="#styled-dashboard"
+                  type="button"
+                  role="tab"
+                  aria-controls="dashboard"
+                  aria-selected="false"
+                >
+                  Structures
+                </button>
+              </li>
+              <li className="me-2" role="presentation">
+                <button
+                  className="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                  id="settings-styled-tab"
+                  data-tabs-target="#styled-settings"
+                  type="button"
+                  role="tab"
+                  aria-controls="settings"
+                  aria-selected="false"
+                >
+                  Expropri List
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div id="default-styled-tab-content">
+            <div
+              // className="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800"
+              id="styled-profile"
+              role="tabpanel"
+              aria-labelledby="profile-tab"
+            >
+              <LotChart data={chartData} station={stationSelected} />
+              {/* <p className="text-sm text-gray-500 dark:text-gray-400">
+                This is some placeholder content the{' '}
+                <strong className="font-medium text-gray-800 dark:text-white">
+                  Profile tab's associated content
+                </strong>
+                . Clicking another tab will toggle the visibility of this one for the next. The tab
+                JavaScript swaps classes to control the content visibility and styling.
+              </p> */}
+            </div>
+            <div
+              className="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800"
+              id="styled-dashboard"
+              role="tabpanel"
+              aria-labelledby="dashboard-tab"
+            >
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                This is some placeholder content the{' '}
+                <strong className="font-medium text-gray-800 dark:text-white">
+                  Dashboard tab's associated content
+                </strong>
+                . Clicking another tab will toggle the visibility of this one for the next. The tab
+                JavaScript swaps classes to control the content visibility and styling.
+              </p>
+            </div>
+            <div
+              className="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800"
+              id="styled-settings"
+              role="tabpanel"
+              aria-labelledby="settings-tab"
+            >
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                This is some placeholder content the{' '}
+                <strong className="font-medium text-gray-800 dark:text-white">
+                  Settings tab's associated content
+                </strong>
+                . Clicking another tab will toggle the visibility of this one for the next. The tab
+                JavaScript swaps classes to control the content visibility and styling.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
