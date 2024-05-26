@@ -80,10 +80,10 @@ const LotChart = (props: any) => {
         categoryField: 'category',
         valueField: 'value',
         //legendLabelText: "[{fill}]{category}[/]",
-        legendValueText: "{valuePercentTotal.formatNumber('#.')}% ({value})",
+        legendValueText: '',
         radius: am5.percent(45), // outer radius
-        innerRadius: am5.percent(20),
-        scale: 1.5,
+        innerRadius: am5.percent(30),
+        scale: 1.9,
       }),
     );
     pieSeriesRef.current = pieSeries;
@@ -110,6 +110,11 @@ const LotChart = (props: any) => {
       am5.Legend.new(root, {
         centerX: am5.percent(50),
         x: am5.percent(50),
+        // layout: am5.GridLayout.new(root, {
+        //   // maxColumns: 3,
+        //   fixedWidthGrid: true,
+        // }),
+        layout: root.verticalLayout,
       }),
     );
     legendRef.current = legend;
@@ -117,8 +122,9 @@ const LotChart = (props: any) => {
 
     // Change the size of legend markers
     legend.markers.template.setAll({
-      width: 18,
-      height: 18,
+      width: 15,
+      height: 15,
+      marginLeft: 30,
     });
 
     // Change the marker shape
@@ -132,15 +138,15 @@ const LotChart = (props: any) => {
     // Responsive legend
     // https://www.amcharts.com/docs/v5/tutorials/pie-chart-with-a-legend-with-dynamically-sized-labels/
     // This aligns Legend to Left
-    chart.onPrivate('width', function (width: any) {
-      const boxWidth = 190; //props.style.width;
-      var availableSpace = Math.max(width - chart.height() - boxWidth, boxWidth);
-      //var availableSpace = (boxWidth - valueLabelsWidth) * 0.7
-      legend.labels.template.setAll({
-        width: availableSpace,
-        maxWidth: availableSpace,
-      });
-    });
+    // chart.onPrivate('width', function (width: any) {
+    //   const boxWidth = 190; //props.style.width;
+    //   var availableSpace = Math.max(width - chart.height() - boxWidth, boxWidth);
+    //   //var availableSpace = (boxWidth - valueLabelsWidth) * 0.7
+    //   legend.labels.template.setAll({
+    //     width: availableSpace,
+    //     maxWidth: availableSpace,
+    //   });
+    // });
 
     // To align legend items: valueLabels right, labels to left
     // 1. fix width of valueLabels
@@ -152,22 +158,22 @@ const LotChart = (props: any) => {
       oversizedBehavior: 'truncate',
       fill: am5.color('#ffffff'),
       //textDecoration: "underline"
-      //width: am5.percent(200)
-      //fontWeight: "300"
+      // width: am5.percent(100),
+
+      fontWeight: '100',
     });
 
-    legend.valueLabels.template.setAll({
-      textAlign: 'right',
-      //width: valueLabelsWidth,
-      fill: am5.color('#ffffff'),
-      //fontSize: LEGEND_FONT_SIZE,
-    });
+    // legend.valueLabels.template.setAll({
+    //   textAlign: 'left',
+    //   width: am5.percent(100),
+    //   fill: am5.color('#ffffff'),
+    // });
 
-    legend.itemContainers.template.setAll({
-      // set space between legend items
-      paddingTop: 3,
-      paddingBottom: 1,
-    });
+    // legend.itemContainers.template.setAll({
+    //   // set space between legend items
+    //   paddingTop: 3,
+    //   paddingBottom: 1,
+    // });
 
     pieSeries.appear(1000, 100);
 
@@ -184,15 +190,62 @@ const LotChart = (props: any) => {
   return (
     <>
       {/* Total Lot Number */}
-
+      <div>
+        {/* <div>
+          <span className="bg-green-100 text-green-800 text-xs font-medium inline-flex items-center px-2.5 py-1 rounded-md dark:bg-green-900 dark:text-green-300">
+            <svg
+              className="w-2.5 h-2.5 me-1.5"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 10 14"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13V1m0 0L1 5m4-4 4 4"
+              />
+            </svg>
+            42.5%
+          </span>
+        </div> */}
+        <div className="grid grid-cols-3 items-center justify-center border-b border-gray-600 ml-2 mr-2 pb-5">
+          {/* if add numbers beside the label, <dl className="flex items-center"></dl> */}
+          <div className="w-14 h-14 border border-gray-500 p-1 rounded-lg bg-gray-800 dark:bg-gray-700 flex items-center justify-center me-3">
+            <img
+              src="https://EijiGorilla.github.io/Symbols/Land_Acquisition.svg"
+              alt="Land Logo"
+              height={'100%'}
+              width={'100%'}
+            />
+          </div>
+          <dl className="items-center">
+            <dt className=" text-base font-normal text-gray-400 dark:text-gray-400 pb-1">
+              Handed Over
+            </dt>
+            <dd className="leading-none text-3xl font-bold text-gray-300 dark:text-white">
+              {props.total}
+            </dd>
+          </dl>
+          <dl className="items-center justify-end">
+            <dt className="ml-5 text-base font-normal text-gray-400 dark:text-gray-400 pb-1">
+              Paid
+            </dt>
+            <dd className="ml-5 leading-none text-3xl font-bold text-gray-300 dark:text-white">
+              59
+            </dd>
+          </dl>
+        </div>
+      </div>
       {/* Lot Chart */}
       <div
         id={chartID}
         style={{
-          height: '70vh',
+          height: '50vh',
           backgroundColor: 'rgb(0,0,0,0)',
           color: 'white',
-          marginBottom: '5%',
         }}
       ></div>
     </>

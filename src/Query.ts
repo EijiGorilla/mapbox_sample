@@ -41,6 +41,11 @@ export const updatechartData = (dataObj: any, station: any) => {
     counts[x] = (counts[x] || 0) + 1;
   });
 
+  // Total number of lots with status
+  const length_non_null = status_all.filter((el: any) => {
+    return el != null;
+  });
+
   // compiling for chart
   const chartArray = statusLotLabel.map((status: any, index: any) => {
     return Object.assign({
@@ -51,6 +56,6 @@ export const updatechartData = (dataObj: any, station: any) => {
       },
     });
   });
-  console.log(chartArray);
-  return chartArray;
+
+  return [length_non_null.length, chartArray];
 };

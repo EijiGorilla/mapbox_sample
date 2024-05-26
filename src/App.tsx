@@ -78,6 +78,7 @@ function App() {
 
   // Chart data
   const [chartData, setChartData] = useState<any>();
+  const [totalLotNumber, setTotalLotNumber] = useState<any>();
 
   // Load Geojson Data
   useEffect(() => {
@@ -126,7 +127,9 @@ function App() {
         labelGeojson.features = labelPointFeature;
 
         // Chart data
-        setChartData(updatechartData(json.features, 'All'));
+        const chartData = updatechartData(json.features, 'All');
+        setChartData(chartData[1]);
+        setTotalLotNumber(chartData[0]);
       })
       .catch((err) => console.error('Could not load data', err));
   }, []);
@@ -224,13 +227,18 @@ function App() {
 
   useEffect(() => {
     if (stationSelected && stationSelected.field1 !== 'All') {
-      setChartData(updatechartData(data[0]?.features, stationSelected.field1));
+      const chartData = updatechartData(data[0]?.features, stationSelected.field1);
+      setChartData(chartData[1]);
+      setTotalLotNumber(chartData[0]);
+
       // Reset filtered geojson layer
       setFilteredGeojson(emptyFeatureCollection);
       zoomToLayer('Station1', 16, data[0], stationSelected.field1);
       //
     } else if (stationSelected && stationSelected.field1 === 'All') {
-      setChartData(updatechartData(data[0]?.features, 'All'));
+      const chartData = updatechartData(data[0]?.features, 'All');
+      setChartData(chartData[1]);
+      setTotalLotNumber(chartData[0]);
       setFilteredGeojson(emptyFeatureCollection);
       data[0]?.features.forEach((feature: any) => {
         filteredGeojson.features.push(feature);
@@ -544,7 +552,7 @@ function App() {
           initialViewState={{
             longitude: 121.0319746,
             latitude: 14.6821565,
-            zoom: 14,
+            zoom: 15,
           }}
           onClick={clickedOn}
           interactiveLayerIds={[
@@ -746,7 +754,7 @@ function App() {
                   aria-controls="dashboard"
                   aria-selected="false"
                 >
-                  Structures
+                  Structure
                 </button>
               </li>
               <li className="me-2" role="presentation">
@@ -759,7 +767,7 @@ function App() {
                   aria-controls="settings"
                   aria-selected="false"
                 >
-                  Expropri List
+                  ExproList
                 </button>
               </li>
             </ul>
@@ -771,7 +779,7 @@ function App() {
               role="tabpanel"
               aria-labelledby="profile-tab"
             >
-              <LotChart data={chartData} station={stationSelected} />
+              <LotChart data={chartData} total={totalLotNumber} station={stationSelected} />
               {/* <p className="text-sm text-gray-500 dark:text-gray-400">
                 This is some placeholder content the{' '}
                 <strong className="font-medium text-gray-800 dark:text-white">
