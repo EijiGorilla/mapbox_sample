@@ -80,7 +80,7 @@ const LotChart = (props: any) => {
         categoryField: 'category',
         valueField: 'value',
         //legendLabelText: "[{fill}]{category}[/]",
-        legendValueText: '',
+        // legendValueText: '',
         radius: am5.percent(45), // outer radius
         innerRadius: am5.percent(30),
         scale: 1.9,
@@ -88,6 +88,23 @@ const LotChart = (props: any) => {
     );
     pieSeriesRef.current = pieSeries;
     chart.series.push(pieSeries);
+
+    // values inside a donut
+    let inner_label = pieSeries.children.push(
+      am5.Label.new(root, {
+        text: '[#ffffff]{valueSum}[/]\n[fontSize: 7px; #d3d3d3; verticalAlign: super]TOTAL LOTS[/]',
+        fontSize: 25,
+        centerX: am5.percent(50),
+        centerY: am5.percent(40),
+        populateText: true,
+        oversizedBehavior: 'fit',
+        textAlign: 'center',
+      }),
+    );
+
+    pieSeries.onPrivate('width', (width: any) => {
+      inner_label.set('maxWidth', width * 0.7);
+    });
 
     // Set slice opacity and stroke color
     pieSeries.slices.template.setAll({
@@ -108,15 +125,14 @@ const LotChart = (props: any) => {
     // https://www.amcharts.com/docs/v5/charts/percent-charts/legend-percent-series/
     var legend = chart.children.push(
       am5.Legend.new(root, {
-        centerX: am5.percent(50),
-        x: am5.percent(50),
         // layout: am5.GridLayout.new(root, {
-        //   // maxColumns: 3,
-        //   fixedWidthGrid: true,
+        //   maxColumns: 2,
+        //   // fixedWidthGrid: true,
         // }),
         layout: root.verticalLayout,
       }),
     );
+
     legendRef.current = legend;
     legend.data.setAll(pieSeries.dataItems);
 
@@ -157,11 +173,14 @@ const LotChart = (props: any) => {
     legend.labels.template.setAll({
       oversizedBehavior: 'truncate',
       fill: am5.color('#ffffff'),
+      textAlign: 'left',
       //textDecoration: "underline"
       // width: am5.percent(100),
 
-      fontWeight: '100',
+      // fontWeight: '100',
     });
+
+    legend.valueLabels.template.set('forceHidden', true);
 
     // legend.valueLabels.template.setAll({
     //   textAlign: 'left',
@@ -169,11 +188,11 @@ const LotChart = (props: any) => {
     //   fill: am5.color('#ffffff'),
     // });
 
-    // legend.itemContainers.template.setAll({
-    //   // set space between legend items
-    //   paddingTop: 3,
-    //   paddingBottom: 1,
-    // });
+    legend.itemContainers.template.setAll({
+      // set space between legend items
+      paddingTop: 3,
+      paddingBottom: 1,
+    });
 
     pieSeries.appear(1000, 100);
 
@@ -226,7 +245,7 @@ const LotChart = (props: any) => {
               Handed Over
             </dt>
             <dd className="leading-none text-3xl font-bold text-gray-300 dark:text-white">
-              {props.total}
+              {props.total - 10}
             </dd>
           </dl>
           <dl className="items-center justify-end">
@@ -246,6 +265,7 @@ const LotChart = (props: any) => {
           height: '50vh',
           backgroundColor: 'rgb(0,0,0,0)',
           color: 'white',
+          marginTop: '10px',
         }}
       ></div>
     </>
