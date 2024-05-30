@@ -59,3 +59,20 @@ export const updatechartData = (dataObj: any, station: any) => {
 
   return [length_non_null.length, chartArray];
 };
+
+// Basemaps
+export const basemap_type_names = ['Dark', 'Light', 'Satellite_Streets'];
+export const basemaps_array = [
+  {
+    type: basemap_type_names[0], // default
+    id: 'dark-v11',
+  },
+  {
+    type: basemap_type_names[1],
+    id: 'light-v11',
+  },
+  {
+    type: basemap_type_names[2],
+    id: 'satellite-streets-v12',
+  },
+];

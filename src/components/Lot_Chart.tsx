@@ -40,12 +40,15 @@ const LotChart = (props: any) => {
   const chartID = 'pie-two';
   ///
   const [lotNumber, setLotNumber] = useState([]);
-  const [handedOverPteNumber, setHandedOverPteNumber] = useState([]);
+  const [handedOverPteNumber, setHandedOverPteNumber] = useState<any>();
+  const [paidLotNumber, setPaidLotNumber] = useState<any>();
 
   //   console.log(props.data);
   useEffect(() => {
     if (props.data) {
       setLotData(props.data);
+      setHandedOverPteNumber(props.total - 10);
+      setPaidLotNumber(props.data.find((emp: any) => emp.category === 'Paid').value);
     }
   }, [props.station, props.data]);
 
@@ -245,7 +248,7 @@ const LotChart = (props: any) => {
               Handed Over
             </dt>
             <dd className="leading-none text-3xl font-bold text-gray-300 dark:text-white">
-              {props.total - 10}
+              {handedOverPteNumber}
             </dd>
           </dl>
           <dl className="items-center justify-end">
@@ -253,7 +256,7 @@ const LotChart = (props: any) => {
               Paid
             </dt>
             <dd className="ml-5 leading-none text-3xl font-bold text-gray-300 dark:text-white">
-              59
+              {paidLotNumber}
             </dd>
           </dl>
         </div>

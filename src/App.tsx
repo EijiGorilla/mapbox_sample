@@ -29,7 +29,13 @@ import {
   structureStyle,
   highlightedLotPolyStyle,
 } from './map-style';
-import { uniqueValue, addDropdown, updatechartData } from './Query';
+import {
+  uniqueValue,
+  addDropdown,
+  updatechartData,
+  basemaps_array,
+  basemap_type_names,
+} from './Query';
 import { LngLatBounds } from 'react-map-gl';
 import bbox from '@turf/bbox';
 import bboxPolygon from '@turf/bbox-polygon';
@@ -79,6 +85,12 @@ function App() {
   // Chart data
   const [chartData, setChartData] = useState<any>();
   const [totalLotNumber, setTotalLotNumber] = useState<any>();
+
+  // Basemap switch
+  const [activeWidget, setActiveWidget] = useState<undefined | any | unknown>(null);
+  const [nextWidget, setNextWidget] = useState<undefined | any | unknown>(null);
+  const [basemapType, setBasemapType] = useState<any>('Dark');
+  const [mapboxStyle, setMapboxStyle] = useState<any>();
 
   // Load Geojson Data
   useEffect(() => {
@@ -254,6 +266,32 @@ function App() {
       );
     }
   }, [stationSelected]);
+
+  // Basemap switch
+  useEffect(() => {
+    if (activeWidget) {
+      const actionActiveWidget = document.querySelector(
+        `[value=${activeWidget}]`,
+      ) as HTMLInputElement;
+      actionActiveWidget.checked = false;
+    }
+
+    // To toggle-off default 'Dark' basemap
+    if (nextWidget && basemapType === 'Dark') {
+      const actionActiveWidget = document.querySelector(`[value=Dark]`) as HTMLInputElement;
+      actionActiveWidget.checked = false;
+    }
+
+    if (nextWidget !== activeWidget) {
+      const actionNextWidget = document.querySelector(`[value=${nextWidget}]`) as HTMLInputElement;
+      actionNextWidget.checked = true;
+      setBasemapType(null);
+    }
+
+    setMapboxStyle(
+      'mapbox://styles/mapbox/' + basemaps_array.find((emp) => emp.type === nextWidget)?.id,
+    );
+  });
 
   // Search and Zoom
   const handleSearch = (event: any) => {
@@ -478,6 +516,70 @@ function App() {
                 </div>
               </ul>
             </li>{' '}
+            {/* Basemaps */}
+            <li>
+              <button
+                type="button"
+                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-500 dark:text-white dark:hover:bg-gray-700"
+                aria-controls="dropdown-pages-basemaps"
+                data-collapse-toggle="dropdown-pages-basemaps"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="flex-shrink-0 w-6 h-6 text-gray-300 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+                <span className="flex-1 ml-3 text-left whitespace-nowrap text-gray-100">
+                  Basemaps
+                </span>
+                <svg
+                  aria-hidden="true"
+                  className="w-6 h-6"
+                  fill="gray"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+              </button>
+              <ul id="dropdown-pages-basemaps" className="hidden py-2 space-y-2 ml-2.5">
+                {basemap_type_names &&
+                  basemap_type_names.map((type_name: any, index: any) => {
+                    return (
+                      <div key={index} id="state-basemaps" className="bg-[#2b2b2b] mb-1 ml-1">
+                        <div className="flex items-center mb-2">
+                          <input
+                            defaultChecked={type_name === 'Dark' ? true : false}
+                            id="checked-checkbox"
+                            type="checkbox"
+                            value={type_name}
+                            onChange={(event) => {
+                              setNextWidget(event.target.value);
+                              setActiveWidget(nextWidget === activeWidget ? null : nextWidget);
+                            }}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                          <label className="ms-2 text-sm text-gray-300">
+                            <b>{type_name}</b>
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </ul>
+            </li>{' '}
             {/*End of Pages*/}
             <li>
               <a
@@ -566,7 +668,8 @@ function App() {
             'highlight-lot',
           ]}
           // https://docs.mapbox.com/api/maps/styles/
-          mapStyle={'mapbox://styles/mapbox/dark-v11'}
+          // mapStyle={'mapbox://styles/mapbox/dark-v11'}
+          mapStyle={!nextWidget ? 'mapbox://styles/mapbox/dark-v11' : mapboxStyle}
         >
           {/* why use useMemo? */}
           {/* Construction Boundary Layer */}
